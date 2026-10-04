@@ -23,6 +23,11 @@ sonar-issues.json
 build-wrapper-dump.json
 bw-output/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # IDE & Editor
 .vscode/
 .idea/

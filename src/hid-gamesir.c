@@ -177,6 +177,14 @@ static int gamesir_raw_event(struct hid_device *hdev, struct hid_report *report,
 		/* System Buttons */
 		input_report_key(input, BTN_MODE,   !!(data[7] & BIT(0)));
 
+		/*
+		 * GameSir Cyclone 2 repurposes the DualShock 4 Touchpad Click bit
+		 * (data[7] bit 1) for rear paddle interactions (L4/R4) since Cyclone 2
+		 * features hardware back paddles rather than a front touchpad.
+		 * Expose directly as native gamepad paddle button (BTN_TRIGGER_HAPPY1).
+		 */
+		input_report_key(input, BTN_TRIGGER_HAPPY1, !!(data[7] & BIT(1)));
+
 		input_sync(input);
 
 		/* Battery telemetry handling */
