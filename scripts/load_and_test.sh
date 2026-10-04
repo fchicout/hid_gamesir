@@ -19,7 +19,13 @@ rmmod hid-gamesir 2>/dev/null || true
 insmod "${REPO_ROOT}/hid-gamesir.ko"
 
 # Find active GameSir / Sony device node
-DEV_NODE=$(ls -d /sys/bus/hid/devices/0003:054C:09CC.* 2>/dev/null | head -n 1 | xargs -n 1 basename 2>/dev/null || true)
+DEV_NODE=""
+for dev_path in /sys/bus/hid/devices/0003:054C:09CC.*; do
+    if [ -e "${dev_path}" ]; then
+        DEV_NODE=$(basename "${dev_path}")
+        break
+    fi
+done
 
 if [ -n "$DEV_NODE" ]; then
     echo "[*] Found active controller node: $DEV_NODE"
