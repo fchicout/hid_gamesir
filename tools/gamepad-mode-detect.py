@@ -9,7 +9,6 @@ Identifies the active hardware mode:
 Supports --watch mode for live monitoring during plug/unplug or mode hotkey changes.
 """
 
-import os
 import sys
 import time
 import glob

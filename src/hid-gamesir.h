@@ -8,17 +8,17 @@
 #ifndef _HID_GAMESIR_H
 #define _HID_GAMESIR_H
 
-#include <linux/types.h>
 #include <linux/hid.h>
 #include <linux/input.h>
 #include <linux/spinlock.h>
+#include <linux/types.h>
 
-#define USB_VENDOR_ID_SONY_SPOOFED	0x054c
-#define USB_DEVICE_ID_SONY_DS4_CUH_ZCT2	0x09cc
+#define USB_VENDOR_ID_SONY_SPOOFED 0x054c
+#define USB_DEVICE_ID_SONY_DS4_CUH_ZCT2 0x09cc
 
 /* Quirk flags */
-#define GAMESIR_QUIRK_NO_BATTERY_GAUGE	BIT(0)
-#define GAMESIR_QUIRK_FORCE_INPUT_PARSE	BIT(1)
+#define GAMESIR_QUIRK_NO_BATTERY_GAUGE BIT(0)
+#define GAMESIR_QUIRK_FORCE_INPUT_PARSE BIT(1)
 
 /**
  * struct gamesir_device - Driver private data for GameSir controllers

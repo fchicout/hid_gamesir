@@ -6,12 +6,9 @@ Zero external dependencies (pure standard library).
 """
 
 import sys
-import os
 import time
 import json
 import argparse
-import socket
-import struct
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 

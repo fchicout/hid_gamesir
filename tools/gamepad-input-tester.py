@@ -17,12 +17,11 @@ import re
 import glob
 import struct
 import select
-import time
 import argparse
 import fcntl
 import array
 from pathlib import Path
-from typing import Optional, Tuple, Dict, List, Any
+from typing import Optional, Dict, List, Any
 
 # ANSI Escape Colors
 BOLD = "\033[1m"
@@ -282,7 +281,7 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
     # Back Paddles (L4 / R4)
     l4_btn = btn_tag("L4 / M1", state.buttons["L4"])
     r4_btn = btn_tag("R4 / M2", state.buttons["R4"])
-    lines.append(pad_line(f"   [REAR PADDLE L4]                                  [REAR PADDLE R4]", BOX_WIDTH))
+    lines.append(pad_line("   [REAR PADDLE L4]                                  [REAR PADDLE R4]", BOX_WIDTH))
     lines.append(pad_line(f"      {l4_btn}                                          {r4_btn}", BOX_WIDTH))
 
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
@@ -311,7 +310,7 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
     lines.append(pad_line(f"{BOLD}💡 Cyclone 2 Hardware Paddle Remap Guide:{RESET}", BOX_WIDTH))
     lines.append(pad_line(f"   1. Hold {BOLD}M{RESET} + Press {BOLD}L4{RESET} (or {BOLD}R4{RESET}) until Home LED blinks.", BOX_WIDTH))
-    lines.append(pad_line(f"   2. Press target button (A, B, X, Y, LB, RB, L3, R3, etc.)", BOX_WIDTH))
+    lines.append(pad_line("   2. Press target button (A, B, X, Y, LB, RB, L3, R3, etc.)", BOX_WIDTH))
     lines.append(pad_line(f"   3. Press {BOLD}L4{RESET} (or {BOLD}R4{RESET}) again to save. It now emits that button!", BOX_WIDTH))
     lines.append(pad_line(f"   {GRAY}[Press Ctrl+C to exit tester]{RESET}", BOX_WIDTH))
     lines.append(f"{CYAN}└" + "─" * (BOX_WIDTH + 2) + "┘" + RESET)
@@ -550,7 +549,7 @@ def main():
 
     if not dev_info["readable"]:
         print(f"{RED}Error: Permission denied accessing {dev_info['path']}.{RESET}")
-        print(f"Please run with sudo or check udev permissions:")
+        print("Please run with sudo or check udev permissions:")
         print(f"  sudo python3 tools/gamepad-input-tester.py -d {dev_info['path']}")
         sys.exit(1)
 

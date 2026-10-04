@@ -13,16 +13,12 @@ Provides a rich 60 FPS graphical HUD visualizing:
 
 import sys
 import os
-import math
 import time
 import glob
 import struct
 import select
-import array
-import fcntl
 import threading
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
 
 try:
     import pygame

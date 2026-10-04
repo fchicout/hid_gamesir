@@ -4,7 +4,6 @@ Tests CLI parsing, telemetry math, ANSI rendering, and device detection logic.
 """
 
 import sys
-import os
 import unittest
 import importlib.util
 from pathlib import Path
