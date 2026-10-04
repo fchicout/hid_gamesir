@@ -16,12 +16,10 @@ Module.markers
 # DKMS build artifacts
 /dkms-build/
 
-# Sonar / CI
-.scannerwork/
-.sonar/
-sonar-issues.json
-build-wrapper-dump.json
-bw-output/
+# CI & Testing
+.coverage
+.pytest_cache/
+.ruff_cache/
 
 # Python
 __pycache__/

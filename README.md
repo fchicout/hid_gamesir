@@ -1,7 +1,6 @@
 # `hid_gamesir` - Linux Kernel HID Driver for GameSir Controllers
 
-[![Build & Test](https://github.com/fchicout/hid_gamesir/actions/workflows/build-test.yml/badge.svg)](https://github.com/fchicout/hid_gamesir/actions/workflows/build-test.yml)
-[![Quality Gate Status](https://sonar.fchicout.dev/api/project_badges/measure?project=hid-gamesir&metric=alert_status)](https://sonar.fchicout.dev/dashboard?id=hid-gamesir)
+[![CI & Quality Gates](https://github.com/fchicout/hid_gamesir/actions/workflows/ci.yml/badge.svg)](https://github.com/fchicout/hid_gamesir/actions/workflows/ci.yml)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL_2.0-blue.svg)](LICENSE)
 [![SemVer](https://img.shields.io/badge/semver-0.1.0-blue)](https://semver.org)
 
@@ -76,11 +75,14 @@ The **GameSir Cyclone 2** features two programmable back paddles (**L4** and **R
 
 ### 2. Diagnostic & Testing Utilities
 ```bash
+# Interactive 60 FPS Graphical HUD (Pygame GUI)
+./tools/gamepad-gui-tester.py
+
 # Live Gamepad & Paddle Input Tester (Visual ASCII HUD)
 ./tools/gamepad-input-tester.py
 
-# Multi-Platform Mode Detector (PS4 / Xbox / Switch)
-./tools/gamepad-mode-detect.py
+# Multi-Platform Mode Detector (PS4 / Xbox / Switch - Live Watch Mode)
+./tools/gamepad-mode-detect.py --watch
 
 # Live Battery Level & Telemetry Monitor
 ./tools/gamepad-battery.py --gamepads
@@ -88,12 +90,14 @@ The **GameSir Cyclone 2** features two programmable back paddles (**L4** and **R
 
 ---
 
-## 📊 SonarQube Integration
+## 🛡️ CI & Quality Gates (Forgejo / Actions)
 
-The repository is configured for automated code quality and security analysis against [**sonar.fchicout.dev**](https://sonar.fchicout.dev):
-- **Project Key:** `hid-gamesir`
-- **Secrets Configured:** `SONAR_TOKEN` and `SONAR_HOST_URL` in GitHub Actions secrets.
-- **Workflow:** [`.github/workflows/sonarqube.yml`](.github/workflows/sonarqube.yml) uses Sonar Build Wrapper to capture compilation units during `make`.
+Automated quality gates are enforced across all branches and pull requests via [`.github/workflows/ci.yml`](.github/workflows/ci.yml) / [`.forgejo/workflows/ci.yml`](.forgejo/workflows/ci.yml):
+
+- **🎨 Code Style & Formatting:** Linux Kernel style compliance via `clang-format` (`src/`), `shellcheck` (`scripts/`), and `ruff` (`tools/`).
+- **🔒 Static Analysis & SAST:** Security scans and defect detection via `cppcheck`, `flawfinder`, and `bandit`.
+- **🧪 Unit & Telemetry Testing:** Automated `unittest` test suites covering protocol math, CLI parameters, and state logic.
+- **⚙️ Kernel Matrix Build:** Out-of-tree build validation and DKMS metadata verification across Linux kernel headers.
 
 ---
 

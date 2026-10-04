@@ -1,0 +1,118 @@
+name: CI & Quality Gates
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Code Linting & Style Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linters (clang-format, shellcheck, ruff)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format shellcheck python3 python3-pip
+          pip install --break-system-packages ruff
+
+      - name: Lint C Code (Linux Kernel Style)
+        run: |
+          clang-format --dry-run --Werror src/*.c src/*.h
+
+      - name: Lint Shell Scripts (shellcheck)
+        run: |
+          shellcheck scripts/*.sh
+
+      - name: Lint Python Tools (ruff & py_compile)
+        run: |
+          python3 -m py_compile tools/*.py scripts/*.py tests/*.py
+          ruff check tools/ tests/
+
+  sast:
+    name: Security & SAST Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Static Analyzers (cppcheck, flawfinder, bandit)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck flawfinder python3 python3-pip
+          pip install --break-system-packages bandit
+
+      - name: C Static Analysis (Cppcheck)
+        run: |
+          cppcheck \
+            --enable=warning,style,performance,portability \
+            --error-exitcode=1 \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            --suppress=constParameterCallback \
+            --inline-suppr \
+            src/
+
+      - name: C Security Vulnerability Scan (Flawfinder)
+        run: |
+          flawfinder --minlevel=3 --error-level=4 src/
+
+      - name: Python Security SAST (Bandit)
+        run: |
+          bandit -r tools/ -ll
+
+  unit-test:
+    name: Unit & Telemetry Test Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Automated Unit Tests
+        run: |
+          python3 -m unittest discover -v tests
+
+  kernel-build:
+    name: Linux Kernel Module Build Gate
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        kernel-pkg:
+          - linux-headers-generic
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Kernel Headers & Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential kmod dkms ${{ matrix.kernel-pkg }}
+
+      - name: Build hid-gamesir Kernel Module
+        run: |
+          make
+
+      - name: Verify Kernel Module Metadata
+        run: |
+          modinfo hid-gamesir.ko
+
+      - name: Validate DKMS Configuration
+        run: |
+          test -f dkms.conf
+          grep -q "PACKAGE_NAME=\"hid-gamesir\"" dkms.conf
