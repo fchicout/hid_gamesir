@@ -212,10 +212,15 @@ def hidraw_reader_thread(telemetry: GamepadTelemetry, stop_event: threading.Even
                                 telemetry.gyro_x, telemetry.gyro_y, telemetry.gyro_z = struct.unpack_from('<hhh', data, 13)
                                 telemetry.accel_x, telemetry.accel_y, telemetry.accel_z = struct.unpack_from('<hhh', data, 19)
 
-                                # Battery
+                                # Battery Telemetry (Cyclone 2 on USB VBUS is fully powered)
                                 bat_byte = data[30]
-                                telemetry.battery_pct = min((bat_byte & 0x0f) * 10, 100)
-                                telemetry.battery_charging = bool(bat_byte & 0x10)
+                                bat_level = bat_byte & 0x0f
+                                if bat_level == 0:
+                                    telemetry.battery_pct = 100
+                                    telemetry.battery_charging = True
+                                else:
+                                    telemetry.battery_pct = min(bat_level * 10, 100)
+                                    telemetry.battery_charging = bool(bat_byte & 0x10)
 
                                 # Touchpad
                                 if len(data) >= 38:
@@ -312,8 +317,11 @@ def main():
         bat_rect = pygame.Rect(WIDTH - 220, 32, 180, 36)
         draw_rounded_panel(screen, bat_rect, color=(20, 24, 34), border_color=bat_col, radius=8, border_width=1)
         
-        charge_icon = "⚡ " if bat_charging else "🔋 "
-        bat_txt = font_sub.render(f"{charge_icon}{bat_pct}% {'Charging' if bat_charging else 'Discharging'}", True, bat_col)
+        if bat_pct == 100 and bat_charging:
+            bat_txt = font_sub.render("⚡ USB Powered (100%)", True, ACCENT_GREEN)
+        else:
+            charge_icon = "⚡ " if bat_charging else "🔋 "
+            bat_txt = font_sub.render(f"{charge_icon}{bat_pct}% {'Charging' if bat_charging else 'Discharging'}", True, bat_col)
         screen.blit(bat_txt, (WIDTH - 208, 42))
 
         # ---------------------------------------------------------------------

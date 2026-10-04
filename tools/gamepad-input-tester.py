@@ -300,7 +300,10 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
     lines.append(pad_line(f"{BOLD}👆 Capacitive Touchpad:{RESET} {touch_click_tag}  F1: {YELLOW}{f1_pos:<15}{RESET} F2: {GRAY}{f2_pos}{RESET}", BOX_WIDTH))
 
     # Battery & Power
-    bat_str = f"{bat_bar(state.battery_pct)} ({'⚡ Charging' if state.battery_charging else '🔋 Discharging'})"
+    if state.battery_pct == 100 and state.battery_charging:
+        bat_str = "[██████████] 100% (⚡ Wired USB Power)"
+    else:
+        bat_str = f"{bat_bar(state.battery_pct)} ({'⚡ Charging' if state.battery_charging else '🔋 Discharging'})"
     lines.append(pad_line(f"{BOLD}🔋 Battery Status:{RESET} {GREEN}{bat_str}{RESET}", BOX_WIDTH))
 
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
@@ -386,10 +389,15 @@ def run_hidraw_tester(dev_info: Dict[str, Any]):
                         state.gyro_x, state.gyro_y, state.gyro_z = struct.unpack_from('<hhh', data, 13)
                         state.accel_x, state.accel_y, state.accel_z = struct.unpack_from('<hhh', data, 19)
 
-                        # Battery Telemetry
+                        # Battery Telemetry (Cyclone 2 on USB VBUS is fully powered)
                         bat_byte = data[30]
-                        state.battery_pct = min((bat_byte & 0x0f) * 10, 100)
-                        state.battery_charging = bool(bat_byte & 0x10)
+                        bat_level = bat_byte & 0x0f
+                        if bat_level == 0:
+                            state.battery_pct = 100
+                            state.battery_charging = True
+                        else:
+                            state.battery_pct = min(bat_level * 10, 100)
+                            state.battery_charging = bool(bat_byte & 0x10)
 
                         # Capacitive Touchpad
                         if len(data) >= 42:

@@ -195,8 +195,9 @@ static int gamesir_raw_event(struct hid_device *hdev, struct hid_report *report,
 
 			spin_lock_irqsave(&gdev->lock, flags);
 			if (bat_level == 0 && (gdev->quirks & GAMESIR_QUIRK_NO_BATTERY_GAUGE)) {
-				gdev->battery_capacity = -1;
-				gdev->battery_status = POWER_SUPPLY_STATUS_UNKNOWN;
+				/* Controller is operating on wired 5V USB power */
+				gdev->battery_capacity = 100;
+				gdev->battery_status = POWER_SUPPLY_STATUS_FULL;
 			} else {
 				gdev->battery_capacity = min_t(int, bat_level * 10, 100);
 				gdev->battery_status = (bat_byte & 0x10) ?
