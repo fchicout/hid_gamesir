@@ -45,17 +45,28 @@ STICK_BORDER = (60, 70, 95)
 STICK_CAP = (55, 65, 88)
 STICK_CAP_ACTIVE = (0, 229, 255)
 
+
 class GamepadTelemetry:
     def __init__(self):
         self.lock = threading.Lock()
         # Buttons
         self.buttons = {
-            "A": False, "B": False, "X": False, "Y": False,
-            "L1": False, "R1": False, "L2": False, "R2": False,
-            "SELECT": False, "START": False, "MODE": False,
-            "L3": False, "R3": False,
-            "L4": False, "R4": False,
-            "TOUCH_CLICK": False
+            "A": False,
+            "B": False,
+            "X": False,
+            "Y": False,
+            "L1": False,
+            "R1": False,
+            "L2": False,
+            "R2": False,
+            "SELECT": False,
+            "START": False,
+            "MODE": False,
+            "L3": False,
+            "R3": False,
+            "L4": False,
+            "R4": False,
+            "TOUCH_CLICK": False,
         }
         # Sticks (-1.0 to 1.0)
         self.left_x = 0.0
@@ -89,6 +100,7 @@ class GamepadTelemetry:
         self.device_node = "None"
         self.connected = False
 
+
 def query_bound_driver() -> str:
     """Find active Linux kernel driver bound to 054C:09CC or GameSir."""
     for p in glob.glob("/sys/bus/hid/devices/*054C:09CC*"):
@@ -105,11 +117,19 @@ def query_bound_driver() -> str:
                     return d.resolve().name
     return "Unknown / Generic"
 
+
 def hidraw_reader_thread(telemetry: GamepadTelemetry, stop_event: threading.Event):
     """Continuously poll HIDRAW device for high-speed 64-byte telemetry."""
     DPAD_MAP = {
-        0: (0, -1), 1: (1, -1), 2: (1, 0), 3: (1, 1),
-        4: (0, 1), 5: (-1, 1), 6: (-1, 0), 7: (-1, -1), 8: (0, 0)
+        0: (0, -1),
+        1: (1, -1),
+        2: (1, 0),
+        3: (1, 1),
+        4: (0, 1),
+        5: (-1, 1),
+        6: (-1, 0),
+        7: (-1, -1),
+        8: (0, 0),
     }
 
     last_sec = time.time()
@@ -173,7 +193,7 @@ def hidraw_reader_thread(telemetry: GamepadTelemetry, stop_event: threading.Even
                                 telemetry.right_y = (data[4] - 128) / 128.0
 
                                 # D-Pad
-                                hat = data[5] & 0x0f
+                                hat = data[5] & 0x0F
                                 telemetry.dpad_x, telemetry.dpad_y = DPAD_MAP.get(hat, (0, 0))
 
                                 # Face Buttons
@@ -205,12 +225,16 @@ def hidraw_reader_thread(telemetry: GamepadTelemetry, stop_event: threading.Even
                                 telemetry.trigger_r = data[9] / 255.0
 
                                 # 6-Axis IMU
-                                telemetry.gyro_x, telemetry.gyro_y, telemetry.gyro_z = struct.unpack_from('<hhh', data, 13)
-                                telemetry.accel_x, telemetry.accel_y, telemetry.accel_z = struct.unpack_from('<hhh', data, 19)
+                                telemetry.gyro_x, telemetry.gyro_y, telemetry.gyro_z = (
+                                    struct.unpack_from("<hhh", data, 13)
+                                )
+                                telemetry.accel_x, telemetry.accel_y, telemetry.accel_z = (
+                                    struct.unpack_from("<hhh", data, 19)
+                                )
 
                                 # Battery Telemetry (Cyclone 2 on USB VBUS is fully powered)
                                 bat_byte = data[30]
-                                bat_level = bat_byte & 0x0f
+                                bat_level = bat_byte & 0x0F
                                 if bat_level == 0:
                                     telemetry.battery_pct = 100
                                     telemetry.battery_charging = True
@@ -221,7 +245,7 @@ def hidraw_reader_thread(telemetry: GamepadTelemetry, stop_event: threading.Even
                                 # Touchpad
                                 if len(data) >= 38:
                                     telemetry.touch_active = not bool(data[35] & 0x80)
-                                    telemetry.touch_x = data[36] | ((data[37] & 0x0f) << 8)
+                                    telemetry.touch_x = data[36] | ((data[37] & 0x0F) << 8)
                                     telemetry.touch_y = (data[37] >> 4) | (data[38] << 4)
 
                         except BlockingIOError:
@@ -233,15 +257,19 @@ def hidraw_reader_thread(telemetry: GamepadTelemetry, stop_event: threading.Even
         except Exception:
             time.sleep(0.5)
 
-def draw_rounded_panel(surface, rect, color=PANEL_BG, border_color=PANEL_BORDER, radius=12, border_width=2):
+
+def draw_rounded_panel(
+    surface, rect, color=PANEL_BG, border_color=PANEL_BORDER, radius=12, border_width=2
+):
     pygame.draw.rect(surface, color, rect, border_radius=radius)
     if border_width > 0:
         pygame.draw.rect(surface, border_color, rect, width=border_width, border_radius=radius)
 
+
 def main():
     pygame.init()
     pygame.display.set_caption("GameSir Cyclone 2 - Live Input & Telemetry GUI")
-    
+
     WIDTH, HEIGHT = 1040, 740
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
@@ -254,7 +282,9 @@ def main():
 
     telemetry = GamepadTelemetry()
     stop_event = threading.Event()
-    reader_thread = threading.Thread(target=hidraw_reader_thread, args=(telemetry, stop_event), daemon=True)
+    reader_thread = threading.Thread(
+        target=hidraw_reader_thread, args=(telemetry, stop_event), daemon=True
+    )
     reader_thread.start()
 
     running = True
@@ -287,9 +317,11 @@ def main():
         # 1. TOP HEADER PANEL (Device, Driver, Mode, Status)
         # ---------------------------------------------------------------------
         draw_rounded_panel(screen, pygame.Rect(20, 16, WIDTH - 40, 70))
-        
+
         # Title
-        title_surf = font_title.render("🎮 GameSir Cyclone 2  |  Hardware Telemetry & Input Tester", True, TEXT_WHITE)
+        title_surf = font_title.render(
+            "🎮 GameSir Cyclone 2  |  Hardware Telemetry & Input Tester", True, TEXT_WHITE
+        )
         screen.blit(title_surf, (36, 26))
 
         # Status Badges
@@ -300,7 +332,11 @@ def main():
         screen.blit(lbl_status, (56, 54))
 
         # Driver Badge
-        driver_col = ACCENT_CYAN if "gamesir" in driver_name.lower() else (ACCENT_BLUE if "playstation" in driver_name.lower() else ACCENT_YELLOW)
+        driver_col = (
+            ACCENT_CYAN
+            if "gamesir" in driver_name.lower()
+            else (ACCENT_BLUE if "playstation" in driver_name.lower() else ACCENT_YELLOW)
+        )
         lbl_drv = font_body.render(f"Driver: {driver_name.upper()}", True, driver_col)
         screen.blit(lbl_drv, (280, 56))
 
@@ -311,13 +347,19 @@ def main():
         # Battery Gauge (Top Right)
         bat_col = ACCENT_GREEN if bat_pct > 30 else (ACCENT_YELLOW if bat_pct > 10 else ACCENT_RED)
         bat_rect = pygame.Rect(WIDTH - 220, 32, 180, 36)
-        draw_rounded_panel(screen, bat_rect, color=(20, 24, 34), border_color=bat_col, radius=8, border_width=1)
-        
+        draw_rounded_panel(
+            screen, bat_rect, color=(20, 24, 34), border_color=bat_col, radius=8, border_width=1
+        )
+
         if bat_pct == 100 and bat_charging:
             bat_txt = font_sub.render("⚡ USB Powered (100%)", True, ACCENT_GREEN)
         else:
             charge_icon = "⚡ " if bat_charging else "🔋 "
-            bat_txt = font_sub.render(f"{charge_icon}{bat_pct}% {'Charging' if bat_charging else 'Discharging'}", True, bat_col)
+            bat_txt = font_sub.render(
+                f"{charge_icon}{bat_pct}% {'Charging' if bat_charging else 'Discharging'}",
+                True,
+                bat_col,
+            )
         screen.blit(bat_txt, (WIDTH - 208, 42))
 
         # ---------------------------------------------------------------------
@@ -328,16 +370,47 @@ def main():
 
         # Controller Shell Background (Vector silhouette)
         shell_color = (38, 44, 60)
-        pygame.draw.polygon(screen, shell_color, [
-            (100, 240), (140, 140), (280, 130), (380, 130), (520, 140), (560, 240),
-            (590, 430), (530, 490), (450, 440), (380, 390), (280, 390), (210, 440),
-            (130, 490), (70, 430)
-        ])
-        pygame.draw.polygon(screen, (55, 65, 88), [
-            (100, 240), (140, 140), (280, 130), (380, 130), (520, 140), (560, 240),
-            (590, 430), (530, 490), (450, 440), (380, 390), (280, 390), (210, 440),
-            (130, 490), (70, 430)
-        ], width=2)
+        pygame.draw.polygon(
+            screen,
+            shell_color,
+            [
+                (100, 240),
+                (140, 140),
+                (280, 130),
+                (380, 130),
+                (520, 140),
+                (560, 240),
+                (590, 430),
+                (530, 490),
+                (450, 440),
+                (380, 390),
+                (280, 390),
+                (210, 440),
+                (130, 490),
+                (70, 430),
+            ],
+        )
+        pygame.draw.polygon(
+            screen,
+            (55, 65, 88),
+            [
+                (100, 240),
+                (140, 140),
+                (280, 130),
+                (380, 130),
+                (520, 140),
+                (560, 240),
+                (590, 430),
+                (530, 490),
+                (450, 440),
+                (380, 390),
+                (280, 390),
+                (210, 440),
+                (130, 490),
+                (70, 430),
+            ],
+            width=2,
+        )
 
         # Triggers (LT / RT) at top
         lt_bar_rect = pygame.Rect(120, 110, 100, 18)
@@ -345,47 +418,97 @@ def main():
         draw_rounded_panel(screen, lt_bar_rect, color=(20, 24, 34), radius=4, border_width=1)
         draw_rounded_panel(screen, rt_bar_rect, color=(20, 24, 34), radius=4, border_width=1)
         if tl > 0:
-            pygame.draw.rect(screen, ACCENT_CYAN, pygame.Rect(121, 111, int(98 * tl), 16), border_radius=3)
+            pygame.draw.rect(
+                screen, ACCENT_CYAN, pygame.Rect(121, 111, int(98 * tl), 16), border_radius=3
+            )
         if tr > 0:
-            pygame.draw.rect(screen, ACCENT_CYAN, pygame.Rect(441, 111, int(98 * tr), 16), border_radius=3)
-        screen.blit(font_btn.render(f"LT {int(tl*100)}%", True, TEXT_WHITE), (130, 92))
-        screen.blit(font_btn.render(f"RT {int(tr*100)}%", True, TEXT_WHITE), (500, 92))
+            pygame.draw.rect(
+                screen, ACCENT_CYAN, pygame.Rect(441, 111, int(98 * tr), 16), border_radius=3
+            )
+        screen.blit(font_btn.render(f"LT {int(tl * 100)}%", True, TEXT_WHITE), (130, 92))
+        screen.blit(font_btn.render(f"RT {int(tr * 100)}%", True, TEXT_WHITE), (500, 92))
 
         # Bumpers (LB / RB)
         lb_rect = pygame.Rect(140, 136, 80, 22)
         rb_rect = pygame.Rect(440, 136, 80, 22)
-        draw_rounded_panel(screen, lb_rect, color=ACCENT_GREEN if btns["L1"] else BUTTON_INACTIVE, radius=6, border_width=1)
-        draw_rounded_panel(screen, rb_rect, color=ACCENT_GREEN if btns["R1"] else BUTTON_INACTIVE, radius=6, border_width=1)
-        screen.blit(font_btn.render("LB (L1)", True, (10, 20, 10) if btns["L1"] else TEXT_WHITE), (155, 139))
-        screen.blit(font_btn.render("RB (R1)", True, (10, 20, 10) if btns["R1"] else TEXT_WHITE), (455, 139))
+        draw_rounded_panel(
+            screen,
+            lb_rect,
+            color=ACCENT_GREEN if btns["L1"] else BUTTON_INACTIVE,
+            radius=6,
+            border_width=1,
+        )
+        draw_rounded_panel(
+            screen,
+            rb_rect,
+            color=ACCENT_GREEN if btns["R1"] else BUTTON_INACTIVE,
+            radius=6,
+            border_width=1,
+        )
+        screen.blit(
+            font_btn.render("LB (L1)", True, (10, 20, 10) if btns["L1"] else TEXT_WHITE), (155, 139)
+        )
+        screen.blit(
+            font_btn.render("RB (R1)", True, (10, 20, 10) if btns["R1"] else TEXT_WHITE), (455, 139)
+        )
 
         # Center Touchpad / Logo Area
         touch_box = pygame.Rect(260, 150, 140, 70)
-        draw_rounded_panel(screen, touch_box, color=(24, 28, 40), border_color=ACCENT_YELLOW if btns["TOUCH_CLICK"] else PANEL_BORDER, radius=8)
-        screen.blit(font_sub.render("GAMESIR", True, ACCENT_YELLOW if btns["TOUCH_CLICK"] else TEXT_MUTED), (296, 165))
-        lbl_pad_state = font_hud.render("[TOUCH CLICK]" if btns["TOUCH_CLICK"] else "(Click / Paddle M1/M2)", True, ACCENT_GREEN if btns["TOUCH_CLICK"] else (100, 110, 130))
+        draw_rounded_panel(
+            screen,
+            touch_box,
+            color=(24, 28, 40),
+            border_color=ACCENT_YELLOW if btns["TOUCH_CLICK"] else PANEL_BORDER,
+            radius=8,
+        )
+        screen.blit(
+            font_sub.render("GAMESIR", True, ACCENT_YELLOW if btns["TOUCH_CLICK"] else TEXT_MUTED),
+            (296, 165),
+        )
+        lbl_pad_state = font_hud.render(
+            "[TOUCH CLICK]" if btns["TOUCH_CLICK"] else "(Click / Paddle M1/M2)",
+            True,
+            ACCENT_GREEN if btns["TOUCH_CLICK"] else (100, 110, 130),
+        )
         screen.blit(lbl_pad_state, (270, 192))
 
         # System Buttons (Back, Home/M, Start)
         def draw_pill_btn(x, y, label, active):
             r = pygame.Rect(x, y, 32, 16)
-            draw_rounded_panel(screen, r, color=ACCENT_GREEN if active else BUTTON_INACTIVE, radius=4, border_width=1)
+            draw_rounded_panel(
+                screen,
+                r,
+                color=ACCENT_GREEN if active else BUTTON_INACTIVE,
+                radius=4,
+                border_width=1,
+            )
             t = font_btn.render(label, True, (10, 20, 10) if active else TEXT_WHITE)
             screen.blit(t, (x + 4, y + 1))
 
         draw_pill_btn(245, 235, "◀◀", btns["SELECT"])
         draw_pill_btn(385, 235, "▶▶", btns["START"])
-        
+
         # Home / M Button (Center Circular)
         pygame.draw.circle(screen, ACCENT_YELLOW if btns["MODE"] else (45, 52, 70), (330, 245), 16)
-        pygame.draw.circle(screen, ACCENT_YELLOW if btns["MODE"] else PANEL_BORDER, (330, 245), 16, width=2)
-        screen.blit(font_btn.render("M", True, (10, 20, 10) if btns["MODE"] else TEXT_WHITE), (324, 236))
+        pygame.draw.circle(
+            screen, ACCENT_YELLOW if btns["MODE"] else PANEL_BORDER, (330, 245), 16, width=2
+        )
+        screen.blit(
+            font_btn.render("M", True, (10, 20, 10) if btns["MODE"] else TEXT_WHITE), (324, 236)
+        )
 
         # D-PAD (Left)
         dpad_cx, dpad_cy = 190, 250
+
         def draw_dpad_dir(dx, dy, active, label):
             r = pygame.Rect(dpad_cx + dx * 26 - 13, dpad_cy + dy * 26 - 13, 26, 26)
-            draw_rounded_panel(screen, r, color=ACCENT_GREEN if active else BUTTON_INACTIVE, radius=4, border_width=1)
+            draw_rounded_panel(
+                screen,
+                r,
+                color=ACCENT_GREEN if active else BUTTON_INACTIVE,
+                radius=4,
+                border_width=1,
+            )
             txt = font_btn.render(label, True, (10, 20, 10) if active else TEXT_WHITE)
             screen.blit(txt, (r.x + 8, r.y + 5))
 
@@ -396,6 +519,7 @@ def main():
 
         # Face Action Buttons (Right: A, B, X, Y)
         face_cx, face_cy = 475, 250
+
         def draw_face_btn(dx, dy, label, active, color):
             pos = (face_cx + dx * 30, face_cy + dy * 30)
             pygame.draw.circle(screen, color if active else BUTTON_INACTIVE, pos, 14)
@@ -420,8 +544,10 @@ def main():
             cap_y = cy + int(sy * 26)
             cap_col = ACCENT_CYAN if btn_active else STICK_CAP
             pygame.draw.circle(screen, cap_col, (cap_x, cap_y), 20)
-            pygame.draw.circle(screen, ACCENT_CYAN if btn_active else (80, 95, 125), (cap_x, cap_y), 20, width=2)
-            
+            pygame.draw.circle(
+                screen, ACCENT_CYAN if btn_active else (80, 95, 125), (cap_x, cap_y), 20, width=2
+            )
+
             # Label
             lbl = font_btn.render(label, True, (10, 20, 10) if btn_active else TEXT_WHITE)
             screen.blit(lbl, (cap_x - 8, cap_y - 8))
@@ -434,10 +560,28 @@ def main():
         # Rear Paddles (L4 & R4 on back grips)
         l4_rect = pygame.Rect(130, 440, 100, 30)
         r4_rect = pygame.Rect(430, 440, 100, 30)
-        draw_rounded_panel(screen, l4_rect, color=ACCENT_GREEN if btns["L4"] else (30, 36, 50), border_color=ACCENT_GREEN if btns["L4"] else PANEL_BORDER, radius=6)
-        draw_rounded_panel(screen, r4_rect, color=ACCENT_GREEN if btns["R4"] else (30, 36, 50), border_color=ACCENT_GREEN if btns["R4"] else PANEL_BORDER, radius=6)
-        screen.blit(font_btn.render("REAR PADDLE L4", True, (10, 20, 10) if btns["L4"] else TEXT_WHITE), (136, 447))
-        screen.blit(font_btn.render("REAR PADDLE R4", True, (10, 20, 10) if btns["R4"] else TEXT_WHITE), (436, 447))
+        draw_rounded_panel(
+            screen,
+            l4_rect,
+            color=ACCENT_GREEN if btns["L4"] else (30, 36, 50),
+            border_color=ACCENT_GREEN if btns["L4"] else PANEL_BORDER,
+            radius=6,
+        )
+        draw_rounded_panel(
+            screen,
+            r4_rect,
+            color=ACCENT_GREEN if btns["R4"] else (30, 36, 50),
+            border_color=ACCENT_GREEN if btns["R4"] else PANEL_BORDER,
+            radius=6,
+        )
+        screen.blit(
+            font_btn.render("REAR PADDLE L4", True, (10, 20, 10) if btns["L4"] else TEXT_WHITE),
+            (136, 447),
+        )
+        screen.blit(
+            font_btn.render("REAR PADDLE R4", True, (10, 20, 10) if btns["R4"] else TEXT_WHITE),
+            (436, 447),
+        )
 
         # ---------------------------------------------------------------------
         # 3. RIGHT PANEL: 6-AXIS IMU (GYROSCOPE & ACCELEROMETER)
@@ -448,13 +592,17 @@ def main():
         screen.blit(font_sub.render("🧭 6-Axis Motion Sensor (IMU)", True, TEXT_WHITE), (696, 114))
 
         # Gyroscope Readings (deg/s)
-        screen.blit(font_body.render("Gyroscope (Angular Velocity):", True, ACCENT_CYAN), (696, 142))
+        screen.blit(
+            font_body.render("Gyroscope (Angular Velocity):", True, ACCENT_CYAN), (696, 142)
+        )
         screen.blit(font_hud.render(f"Pitch (X): {gx:+05d}", True, TEXT_WHITE), (696, 162))
         screen.blit(font_hud.render(f"Yaw   (Y): {gy:+05d}", True, TEXT_WHITE), (806, 162))
         screen.blit(font_hud.render(f"Roll  (Z): {gz:+05d}", True, TEXT_WHITE), (916, 162))
 
         # Accelerometer Readings (mg)
-        screen.blit(font_body.render("Accelerometer (Linear Gravity):", True, ACCENT_MAGENTA), (696, 192))
+        screen.blit(
+            font_body.render("Accelerometer (Linear Gravity):", True, ACCENT_MAGENTA), (696, 192)
+        )
         screen.blit(font_hud.render(f"Accel X: {ax:+05d}", True, TEXT_WHITE), (696, 212))
         screen.blit(font_hud.render(f"Accel Y: {ay:+05d}", True, TEXT_WHITE), (806, 212))
         screen.blit(font_hud.render(f"Accel Z: {az:+05d}", True, TEXT_WHITE), (916, 212))
@@ -474,20 +622,32 @@ def main():
         touch_panel = pygame.Rect(680, 390, 340, 130)
         draw_rounded_panel(screen, touch_panel)
         screen.blit(font_sub.render("👆 Capacitive Touchpad Tracker", True, TEXT_WHITE), (696, 404))
-        
+
         touch_canvas = pygame.Rect(696, 430, 200, 75)
         draw_rounded_panel(screen, touch_canvas, color=(16, 20, 28), radius=6, border_width=1)
-        
+
         # Touch point inside canvas (0..1920, 0..942)
         if telemetry.touch_active:
             px = 696 + int((telemetry.touch_x / 1920.0) * 200)
             py = 430 + int((telemetry.touch_y / 942.0) * 75)
             pygame.draw.circle(screen, ACCENT_YELLOW, (px, py), 6)
-            screen.blit(font_hud.render(f"F1: ({telemetry.touch_x:04d}, {telemetry.touch_y:04d})", True, ACCENT_YELLOW), (910, 440))
+            screen.blit(
+                font_hud.render(
+                    f"F1: ({telemetry.touch_x:04d}, {telemetry.touch_y:04d})", True, ACCENT_YELLOW
+                ),
+                (910, 440),
+            )
         else:
             screen.blit(font_hud.render("F1: Inactive", True, TEXT_MUTED), (910, 440))
 
-        screen.blit(font_hud.render(f"Click: {'ON' if btns['TOUCH_CLICK'] else 'OFF'}", True, ACCENT_GREEN if btns["TOUCH_CLICK"] else TEXT_MUTED), (910, 470))
+        screen.blit(
+            font_hud.render(
+                f"Click: {'ON' if btns['TOUCH_CLICK'] else 'OFF'}",
+                True,
+                ACCENT_GREEN if btns["TOUCH_CLICK"] else TEXT_MUTED,
+            ),
+            (910, 470),
+        )
 
         # ---------------------------------------------------------------------
         # 5. BOTTOM FOOTER: PADDLE & DRIVER CAPABILITY GUIDE
@@ -495,11 +655,40 @@ def main():
         footer_panel = pygame.Rect(20, 540, WIDTH - 40, 175)
         draw_rounded_panel(screen, footer_panel)
 
-        screen.blit(font_sub.render("💡 GameSir Cyclone 2 Hardware vs Driver Architecture:", True, ACCENT_YELLOW), (36, 552))
-        screen.blit(font_body.render("• In hid_gamesir driver: Back paddles (L4/R4) are mapped as native gamepad triggers (BTN_TRIGGER_HAPPY1/2).", True, TEXT_WHITE), (36, 576))
-        screen.blit(font_body.render("• In hid-playstation driver: Cyclone 2 translates unmapped L4/R4 paddles as touchpad clicks (as DS4 lacks rear paddles).", True, TEXT_MUTED), (36, 596))
-        screen.blit(font_body.render("• Hardware Remapping: Hold [M] + Press [L4/R4] until LED blinks -> Press target button (A, B, X, Y, LB, RB) -> Press paddle again to save.", True, TEXT_WHITE), (36, 616))
-        screen.blit(font_body.render("• Press ESC or Close window to exit tester.", True, (110, 120, 140)), (36, 642))
+        screen.blit(
+            font_sub.render(
+                "💡 GameSir Cyclone 2 Hardware vs Driver Architecture:", True, ACCENT_YELLOW
+            ),
+            (36, 552),
+        )
+        screen.blit(
+            font_body.render(
+                "• In hid_gamesir driver: Back paddles (L4/R4) are mapped as native gamepad triggers (BTN_TRIGGER_HAPPY1/2).",
+                True,
+                TEXT_WHITE,
+            ),
+            (36, 576),
+        )
+        screen.blit(
+            font_body.render(
+                "• In hid-playstation driver: Cyclone 2 translates unmapped L4/R4 paddles as touchpad clicks (as DS4 lacks rear paddles).",
+                True,
+                TEXT_MUTED,
+            ),
+            (36, 596),
+        )
+        screen.blit(
+            font_body.render(
+                "• Hardware Remapping: Hold [M] + Press [L4/R4] until LED blinks -> Press target button (A, B, X, Y, LB, RB) -> Press paddle again to save.",
+                True,
+                TEXT_WHITE,
+            ),
+            (36, 616),
+        )
+        screen.blit(
+            font_body.render("• Press ESC or Close window to exit tester.", True, (110, 120, 140)),
+            (36, 642),
+        )
 
         pygame.display.flip()
         clock.tick(60)
@@ -507,6 +696,7 @@ def main():
     stop_event.set()
     reader_thread.join(timeout=1.0)
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()

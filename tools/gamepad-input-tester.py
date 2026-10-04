@@ -44,21 +44,21 @@ EV_KEY = 0x01
 EV_REL = 0x02
 EV_ABS = 0x03
 
-BTN_SOUTH = 0x130          # A / Cross
-BTN_EAST = 0x131           # B / Circle
-BTN_NORTH = 0x133          # X / Triangle
-BTN_WEST = 0x134           # Y / Square
-BTN_TL = 0x136             # L1 / LB
-BTN_TR = 0x137             # R1 / RB
-BTN_TL2 = 0x138            # L2
-BTN_TR2 = 0x139            # R2
-BTN_SELECT = 0x13a         # Select / Share
-BTN_START = 0x13b          # Start / Options
-BTN_MODE = 0x13c           # Home / PS / M
-BTN_THUMBL = 0x13d         # L3
-BTN_THUMBR = 0x13e         # R3
-BTN_TRIGGER_HAPPY1 = 0x2c0 # L4 / M1 Paddle
-BTN_TRIGGER_HAPPY2 = 0x2c1 # R4 / M2 Paddle
+BTN_SOUTH = 0x130  # A / Cross
+BTN_EAST = 0x131  # B / Circle
+BTN_NORTH = 0x133  # X / Triangle
+BTN_WEST = 0x134  # Y / Square
+BTN_TL = 0x136  # L1 / LB
+BTN_TR = 0x137  # R1 / RB
+BTN_TL2 = 0x138  # L2
+BTN_TR2 = 0x139  # R2
+BTN_SELECT = 0x13A  # Select / Share
+BTN_START = 0x13B  # Start / Options
+BTN_MODE = 0x13C  # Home / PS / M
+BTN_THUMBL = 0x13D  # L3
+BTN_THUMBR = 0x13E  # R3
+BTN_TRIGGER_HAPPY1 = 0x2C0  # L4 / M1 Paddle
+BTN_TRIGGER_HAPPY2 = 0x2C1  # R4 / M2 Paddle
 
 ABS_X = 0x00
 ABS_Y = 0x01
@@ -73,9 +73,11 @@ JS_EVENT_BUTTON = 0x01
 JS_EVENT_AXIS = 0x02
 JS_EVENT_INIT = 0x80
 
+
 def strip_ansi(text: str) -> str:
     """Remove ANSI escape sequences to compute exact visible string width."""
-    return re.sub(r'\033\[[0-9;]*[a-zA-Z]', '', text)
+    return re.sub(r"\033\[[0-9;]*[a-zA-Z]", "", text)
+
 
 def pad_line(content: str, width: int = 74) -> str:
     """Wrap content inside a rigid box line with exact character padding."""
@@ -83,15 +85,16 @@ def pad_line(content: str, width: int = 74) -> str:
     pad = max(0, width - vis_len)
     return "│ " + content + (" " * pad) + " │"
 
+
 def get_device_name(dev_path: str) -> str:
     """Query human-readable device name via evdev ioctl or sysfs."""
     try:
         if "event" in dev_path:
             fd = os.open(dev_path, os.O_RDONLY | os.O_NONBLOCK)
-            buf = array.array('B', [0] * 256)
-            fcntl.ioctl(fd, 0x80ff4506, buf, True)
+            buf = array.array("B", [0] * 256)
+            fcntl.ioctl(fd, 0x80FF4506, buf, True)
             os.close(fd)
-            name = buf.tobytes().split(b'\x00')[0].decode('utf-8', errors='ignore').strip()
+            name = buf.tobytes().split(b"\x00")[0].decode("utf-8", errors="ignore").strip()
             if name:
                 return name
     except Exception:
@@ -106,6 +109,7 @@ def get_device_name(dev_path: str) -> str:
             pass
 
     return os.path.basename(dev_path)
+
 
 def list_devices() -> List[Dict[str, Any]]:
     """Enumerate all available gamepad device nodes."""
@@ -126,15 +130,13 @@ def list_devices() -> List[Dict[str, Any]]:
             if "Chicken Run" in content or "054C:09CC" in content:
                 desc = "GameSir / DualShock 4 (Direct HID Telemetry)"
         if "GameSir" in desc or "Chicken Run" in desc or "DualShock" in desc:
-            devices.append({
-                "path": p,
-                "realpath": real,
-                "type": "hidraw",
-                "name": desc,
-                "readable": readable
-            })
+            devices.append(
+                {"path": p, "realpath": real, "type": "hidraw", "name": desc, "readable": readable}
+            )
 
-    for p in sorted(glob.glob("/dev/input/by-id/*event-joystick*") + glob.glob("/dev/input/by-id/*joystick*")):
+    for p in sorted(
+        glob.glob("/dev/input/by-id/*event-joystick*") + glob.glob("/dev/input/by-id/*joystick*")
+    ):
         real = os.path.realpath(p)
         if real in seen_realpaths:
             continue
@@ -142,15 +144,12 @@ def list_devices() -> List[Dict[str, Any]]:
         readable = os.access(p, os.R_OK)
         dev_type = "evdev" if "event" in real else "jsdev"
         name = get_device_name(p)
-        devices.append({
-            "path": p,
-            "realpath": real,
-            "type": dev_type,
-            "name": name,
-            "readable": readable
-        })
+        devices.append(
+            {"path": p, "realpath": real, "type": dev_type, "name": name, "readable": readable}
+        )
 
     return devices
+
 
 def select_best_device() -> Optional[Dict[str, Any]]:
     devs = list_devices()
@@ -173,16 +172,27 @@ def select_best_device() -> Optional[Dict[str, Any]]:
 
     return devs[0]
 
+
 class GamepadState:
     def __init__(self):
         # Buttons
         self.buttons = {
-            "A": False, "B": False, "X": False, "Y": False,
-            "L1": False, "R1": False, "L2": False, "R2": False,
-            "SELECT": False, "START": False, "MODE": False,
-            "L3": False, "R3": False,
-            "L4": False, "R4": False,
-            "TOUCH_CLICK": False
+            "A": False,
+            "B": False,
+            "X": False,
+            "Y": False,
+            "L1": False,
+            "R1": False,
+            "L2": False,
+            "R2": False,
+            "SELECT": False,
+            "START": False,
+            "MODE": False,
+            "L3": False,
+            "R3": False,
+            "L4": False,
+            "R4": False,
+            "TOUCH_CLICK": False,
         }
         # Sticks & Triggers
         self.left_x = 0.0
@@ -216,6 +226,7 @@ class GamepadState:
         self.last_event_str = "Listening for inputs & telemetry..."
         self.event_count = 0
 
+
 def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
     BOX_WIDTH = 74
 
@@ -247,28 +258,57 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
 
     lines = []
     lines.append(f"{CYAN}┌" + "─" * (BOX_WIDTH + 2) + "┐" + RESET)
-    lines.append(pad_line(f"{BOLD}🎮 GameSir Cyclone 2 Live Input & Telemetry Tester{RESET}  {GRAY}(Events: {state.event_count}){RESET}", BOX_WIDTH))
-    lines.append(pad_line(f"{BLUE}Device:{RESET} {BOLD}{dev_info.get('name', 'Unknown')}{RESET}", BOX_WIDTH))
-    lines.append(pad_line(f"{BLUE}Node:  {RESET} {dev_info.get('path')} {GRAY}(Backend: {dev_info.get('type').upper()}){RESET}", BOX_WIDTH))
+    lines.append(
+        pad_line(
+            f"{BOLD}🎮 GameSir Cyclone 2 Live Input & Telemetry Tester{RESET}  {GRAY}(Events: {state.event_count}){RESET}",
+            BOX_WIDTH,
+        )
+    )
+    lines.append(
+        pad_line(f"{BLUE}Device:{RESET} {BOLD}{dev_info.get('name', 'Unknown')}{RESET}", BOX_WIDTH)
+    )
+    lines.append(
+        pad_line(
+            f"{BLUE}Node:  {RESET} {dev_info.get('path')} {GRAY}(Backend: {dev_info.get('type').upper()}){RESET}",
+            BOX_WIDTH,
+        )
+    )
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
-    
+
     # Triggers & Bumpers
     lt_str = f"LT: {btn_tag('L2', state.buttons['L2'])} {trigger_bar(state.trigger_l, 8)}"
     rt_str = f"RT: {btn_tag('R2', state.buttons['R2'])} {trigger_bar(state.trigger_r, 8)}"
     lines.append(pad_line(f"{lt_str}                    {rt_str}", BOX_WIDTH))
-    
+
     lb_str = f"LB: {btn_tag('L1', state.buttons['L1'])}"
     rb_str = f"RB: {btn_tag('R1', state.buttons['R1'])}"
     lines.append(pad_line(f"{lb_str}                                     {rb_str}", BOX_WIDTH))
-    
+
     lines.append(pad_line("", BOX_WIDTH))
 
     # Face Buttons and D-Pad Layout
-    lines.append(pad_line("       D-PAD               SYSTEM BUTTONS            ACTION BUTTONS", BOX_WIDTH))
-    lines.append(pad_line(f"        {btn_tag('▲', dpad_up, 1)}              {btn_tag('BACK', state.buttons['SELECT'])}  {btn_tag('M/PS', state.buttons['MODE'])}  {btn_tag('START', state.buttons['START'])}            {btn_tag('Y', state.buttons['Y'], 1)}", BOX_WIDTH))
-    lines.append(pad_line(f"     {btn_tag('◀', dpad_left, 1)}     {btn_tag('▶', dpad_right, 1)}                                      {btn_tag('X', state.buttons['X'], 1)}     {btn_tag('B', state.buttons['B'], 1)}", BOX_WIDTH))
-    lines.append(pad_line(f"        {btn_tag('▼', dpad_down, 1)}                                                   {btn_tag('A', state.buttons['A'], 1)}", BOX_WIDTH))
-    
+    lines.append(
+        pad_line("       D-PAD               SYSTEM BUTTONS            ACTION BUTTONS", BOX_WIDTH)
+    )
+    lines.append(
+        pad_line(
+            f"        {btn_tag('▲', dpad_up, 1)}              {btn_tag('BACK', state.buttons['SELECT'])}  {btn_tag('M/PS', state.buttons['MODE'])}  {btn_tag('START', state.buttons['START'])}            {btn_tag('Y', state.buttons['Y'], 1)}",
+            BOX_WIDTH,
+        )
+    )
+    lines.append(
+        pad_line(
+            f"     {btn_tag('◀', dpad_left, 1)}     {btn_tag('▶', dpad_right, 1)}                                      {btn_tag('X', state.buttons['X'], 1)}     {btn_tag('B', state.buttons['B'], 1)}",
+            BOX_WIDTH,
+        )
+    )
+    lines.append(
+        pad_line(
+            f"        {btn_tag('▼', dpad_down, 1)}                                                   {btn_tag('A', state.buttons['A'], 1)}",
+            BOX_WIDTH,
+        )
+    )
+
     lines.append(pad_line("", BOX_WIDTH))
 
     # Analog Sticks
@@ -281,11 +321,15 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
     # Back Paddles (L4 / R4)
     l4_btn = btn_tag("L4 / M1", state.buttons["L4"])
     r4_btn = btn_tag("R4 / M2", state.buttons["R4"])
-    lines.append(pad_line("   [REAR PADDLE L4]                                  [REAR PADDLE R4]", BOX_WIDTH))
-    lines.append(pad_line(f"      {l4_btn}                                          {r4_btn}", BOX_WIDTH))
+    lines.append(
+        pad_line("   [REAR PADDLE L4]                                  [REAR PADDLE R4]", BOX_WIDTH)
+    )
+    lines.append(
+        pad_line(f"      {l4_btn}                                          {r4_btn}", BOX_WIDTH)
+    )
 
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
-    
+
     # 6-Axis IMU (Motion Telemetry)
     lines.append(pad_line(f"{BOLD}🧭 6-Axis Motion Sensor (IMU):{RESET}", BOX_WIDTH))
     gyro_str = f"GYRO:  (X:{state.gyro_x:+05d}, Y:{state.gyro_y:+05d}, Z:{state.gyro_z:+05d})"
@@ -294,9 +338,18 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
 
     # Capacitive Touchpad
     touch_click_tag = btn_tag("CLICK", state.buttons["TOUCH_CLICK"])
-    f1_pos = f"(X:{state.touch_x:04d}, Y:{state.touch_y:04d})" if state.touch_active else "(INACTIVE)"
-    f2_pos = f"(X:{state.touch2_x:04d}, Y:{state.touch2_y:04d})" if state.touch2_active else "(INACTIVE)"
-    lines.append(pad_line(f"{BOLD}👆 Capacitive Touchpad:{RESET} {touch_click_tag}  F1: {YELLOW}{f1_pos:<15}{RESET} F2: {GRAY}{f2_pos}{RESET}", BOX_WIDTH))
+    f1_pos = (
+        f"(X:{state.touch_x:04d}, Y:{state.touch_y:04d})" if state.touch_active else "(INACTIVE)"
+    )
+    f2_pos = (
+        f"(X:{state.touch2_x:04d}, Y:{state.touch2_y:04d})" if state.touch2_active else "(INACTIVE)"
+    )
+    lines.append(
+        pad_line(
+            f"{BOLD}👆 Capacitive Touchpad:{RESET} {touch_click_tag}  F1: {YELLOW}{f1_pos:<15}{RESET} F2: {GRAY}{f2_pos}{RESET}",
+            BOX_WIDTH,
+        )
+    )
 
     # Battery & Power
     if state.battery_pct == 100 and state.battery_charging:
@@ -306,17 +359,32 @@ def draw_hud(state: GamepadState, dev_info: Dict[str, Any]):
     lines.append(pad_line(f"{BOLD}🔋 Battery Status:{RESET} {GREEN}{bat_str}{RESET}", BOX_WIDTH))
 
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
-    lines.append(pad_line(f"{BOLD}Last Event:{RESET} {YELLOW}{state.last_event_str}{RESET}", BOX_WIDTH))
+    lines.append(
+        pad_line(f"{BOLD}Last Event:{RESET} {YELLOW}{state.last_event_str}{RESET}", BOX_WIDTH)
+    )
     lines.append(f"{CYAN}├" + "─" * (BOX_WIDTH + 2) + "┤" + RESET)
     lines.append(pad_line(f"{BOLD}💡 Cyclone 2 Hardware Paddle Remap Guide:{RESET}", BOX_WIDTH))
-    lines.append(pad_line(f"   1. Hold {BOLD}M{RESET} + Press {BOLD}L4{RESET} (or {BOLD}R4{RESET}) until Home LED blinks.", BOX_WIDTH))
-    lines.append(pad_line("   2. Press target button (A, B, X, Y, LB, RB, L3, R3, etc.)", BOX_WIDTH))
-    lines.append(pad_line(f"   3. Press {BOLD}L4{RESET} (or {BOLD}R4{RESET}) again to save. It now emits that button!", BOX_WIDTH))
+    lines.append(
+        pad_line(
+            f"   1. Hold {BOLD}M{RESET} + Press {BOLD}L4{RESET} (or {BOLD}R4{RESET}) until Home LED blinks.",
+            BOX_WIDTH,
+        )
+    )
+    lines.append(
+        pad_line("   2. Press target button (A, B, X, Y, LB, RB, L3, R3, etc.)", BOX_WIDTH)
+    )
+    lines.append(
+        pad_line(
+            f"   3. Press {BOLD}L4{RESET} (or {BOLD}R4{RESET}) again to save. It now emits that button!",
+            BOX_WIDTH,
+        )
+    )
     lines.append(pad_line(f"   {GRAY}[Press Ctrl+C to exit tester]{RESET}", BOX_WIDTH))
     lines.append(f"{CYAN}└" + "─" * (BOX_WIDTH + 2) + "┘" + RESET)
 
     sys.stdout.write(CLEAR_SCREEN + "\n".join(lines) + "\n")
     sys.stdout.flush()
+
 
 def run_hidraw_tester(dev_info: Dict[str, Any]):
     """Process full-speed 64-byte HID report packets (inputs + IMU + touchpad + battery)."""
@@ -325,15 +393,15 @@ def run_hidraw_tester(dev_info: Dict[str, Any]):
     state = GamepadState()
 
     DPAD_MAP = {
-        0: (0, -1),   # Up
-        1: (1, -1),   # Up-Right
-        2: (1, 0),    # Right
-        3: (1, 1),    # Down-Right
-        4: (0, 1),    # Down
-        5: (-1, 1),   # Down-Left
-        6: (-1, 0),   # Left
+        0: (0, -1),  # Up
+        1: (1, -1),  # Up-Right
+        2: (1, 0),  # Right
+        3: (1, 1),  # Down-Right
+        4: (0, 1),  # Down
+        5: (-1, 1),  # Down-Left
+        6: (-1, 0),  # Left
         7: (-1, -1),  # Up-Left
-        8: (0, 0),    # Released
+        8: (0, 0),  # Released
     }
 
     sys.stdout.write(HIDE_CURSOR)
@@ -357,7 +425,7 @@ def run_hidraw_tester(dev_info: Dict[str, Any]):
                         state.right_y = (data[4] - 128) / 128.0
 
                         # D-Pad (Hat)
-                        hat = data[5] & 0x0f
+                        hat = data[5] & 0x0F
                         state.dpad_x, state.dpad_y = DPAD_MAP.get(hat, (0, 0))
 
                         # Face Buttons
@@ -385,12 +453,16 @@ def run_hidraw_tester(dev_info: Dict[str, Any]):
                         state.trigger_r = data[9] / 255.0
 
                         # 6-Axis IMU (Motion Sensors)
-                        state.gyro_x, state.gyro_y, state.gyro_z = struct.unpack_from('<hhh', data, 13)
-                        state.accel_x, state.accel_y, state.accel_z = struct.unpack_from('<hhh', data, 19)
+                        state.gyro_x, state.gyro_y, state.gyro_z = struct.unpack_from(
+                            "<hhh", data, 13
+                        )
+                        state.accel_x, state.accel_y, state.accel_z = struct.unpack_from(
+                            "<hhh", data, 19
+                        )
 
                         # Battery Telemetry (Cyclone 2 on USB VBUS is fully powered)
                         bat_byte = data[30]
-                        bat_level = bat_byte & 0x0f
+                        bat_level = bat_byte & 0x0F
                         if bat_level == 0:
                             state.battery_pct = 100
                             state.battery_charging = True
@@ -401,11 +473,11 @@ def run_hidraw_tester(dev_info: Dict[str, Any]):
                         # Capacitive Touchpad
                         if len(data) >= 42:
                             state.touch_active = not bool(data[35] & 0x80)
-                            state.touch_x = data[36] | ((data[37] & 0x0f) << 8)
+                            state.touch_x = data[36] | ((data[37] & 0x0F) << 8)
                             state.touch_y = (data[37] >> 4) | (data[38] << 4)
 
                             state.touch2_active = not bool(data[39] & 0x80)
-                            state.touch2_x = data[40] | ((data[41] & 0x0f) << 8)
+                            state.touch2_x = data[40] | ((data[41] & 0x0F) << 8)
                             state.touch2_y = (data[41] >> 4) | (data[42] << 4)
 
                         state.last_event_str = f"Report 0x01 | IMU G:({state.gyro_x:+04d},{state.gyro_y:+04d},{state.gyro_z:+04d}) | Bat: {state.battery_pct}%"
@@ -420,6 +492,7 @@ def run_hidraw_tester(dev_info: Dict[str, Any]):
         os.close(fd)
         sys.stdout.write(SHOW_CURSOR)
         print("\nExited input tester.")
+
 
 def run_evdev_tester(dev_info: Dict[str, Any]):
     """Process live Linux evdev (struct input_event) packets."""
@@ -464,7 +537,7 @@ def run_evdev_tester(dev_info: Dict[str, Any]):
                         state.event_count += 1
 
                         if ev_type == EV_KEY:
-                            pressed = (value == 1)
+                            pressed = value == 1
                             b_name = KEY_MAP.get(code, f"KEY_0x{code:03x}")
                             if b_name in state.buttons:
                                 state.buttons[b_name] = pressed
@@ -472,19 +545,35 @@ def run_evdev_tester(dev_info: Dict[str, Any]):
 
                         elif ev_type == EV_ABS:
                             if code == ABS_X:
-                                state.left_x = (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                state.left_x = (
+                                    (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                )
                             elif code == ABS_Y:
-                                state.left_y = (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                state.left_y = (
+                                    (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                )
                             elif code == ABS_RX or code == ABS_Z:
                                 if code == ABS_RX:
-                                    state.right_x = (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                    state.right_x = (
+                                        (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                    )
                                 else:
-                                    state.trigger_l = value / 255.0 if value <= 255 else max(0.0, (value + 32768) / 65535.0)
+                                    state.trigger_l = (
+                                        value / 255.0
+                                        if value <= 255
+                                        else max(0.0, (value + 32768) / 65535.0)
+                                    )
                             elif code == ABS_RY or code == ABS_RZ:
                                 if code == ABS_RY:
-                                    state.right_y = (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                    state.right_y = (
+                                        (value - 128) / 128.0 if value <= 255 else value / 32767.0
+                                    )
                                 else:
-                                    state.trigger_r = value / 255.0 if value <= 255 else max(0.0, (value + 32768) / 65535.0)
+                                    state.trigger_r = (
+                                        value / 255.0
+                                        if value <= 255
+                                        else max(0.0, (value + 32768) / 65535.0)
+                                    )
                             elif code == ABS_HAT0X:
                                 state.dpad_x = value
                             elif code == ABS_HAT0Y:
@@ -503,11 +592,25 @@ def run_evdev_tester(dev_info: Dict[str, Any]):
         sys.stdout.write(SHOW_CURSOR)
         print("\nExited input tester.")
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Real-Time Visual Gamepad Input, IMU & Telemetry Tester")
-    parser.add_argument("-d", "--device", help="Path to /dev/hidraw*, /dev/input/event*, or /dev/input/js* device node", default=None)
-    parser.add_argument("-l", "--list", action="store_true", help="List all detected gamepad/joystick devices")
-    parser.add_argument("--hidraw", action="store_true", help="Force hidraw backend mode (full IMU + Touchpad + Battery)")
+    parser = argparse.ArgumentParser(
+        description="Real-Time Visual Gamepad Input, IMU & Telemetry Tester"
+    )
+    parser.add_argument(
+        "-d",
+        "--device",
+        help="Path to /dev/hidraw*, /dev/input/event*, or /dev/input/js* device node",
+        default=None,
+    )
+    parser.add_argument(
+        "-l", "--list", action="store_true", help="List all detected gamepad/joystick devices"
+    )
+    parser.add_argument(
+        "--hidraw",
+        action="store_true",
+        help="Force hidraw backend mode (full IMU + Touchpad + Battery)",
+    )
     parser.add_argument("--evdev", action="store_true", help="Force evdev backend mode")
     args = parser.parse_args()
 
@@ -516,7 +619,11 @@ def main():
         print(f"\n{BOLD}Detected Input & HID Devices ({len(devs)}):{RESET}")
         print("------------------------------------------------------------------------")
         for idx, d in enumerate(devs, 1):
-            access_str = f"{GREEN}Readable{RESET}" if d["readable"] else f"{RED}Permission Denied (run with sudo){RESET}"
+            access_str = (
+                f"{GREEN}Readable{RESET}"
+                if d["readable"]
+                else f"{RED}Permission Denied (run with sudo){RESET}"
+            )
             print(f" {idx}. {BOLD}{d['name']}{RESET}")
             print(f"    Path:    {d['path']} -> {d['realpath']}")
             print(f"    Type:    {d['type'].upper()}  |  Access: {access_str}")
@@ -537,7 +644,7 @@ def main():
             "realpath": real,
             "type": dev_type,
             "name": get_device_name(target),
-            "readable": os.access(target, os.R_OK)
+            "readable": os.access(target, os.R_OK),
         }
     else:
         dev_info = select_best_device()
@@ -557,6 +664,7 @@ def main():
         run_hidraw_tester(dev_info)
     else:
         run_evdev_tester(dev_info)
+
 
 if __name__ == "__main__":
     main()

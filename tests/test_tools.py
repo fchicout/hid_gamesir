@@ -12,12 +12,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
+
 def load_module(name: str, relative_path: str):
     path = REPO_ROOT / relative_path
     spec = importlib.util.spec_from_file_location(name, str(path))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
 
 class TestGamepadTools(unittest.TestCase):
     def test_battery_draw_bar(self):
@@ -30,14 +32,14 @@ class TestGamepadTools(unittest.TestCase):
 
     def test_input_tester_alignment(self):
         tester_mod = load_module("gamepad_input_tester", "tools/gamepad-input-tester.py")
-        
+
         raw_str = "\033[1;32mActive Button\033[0m"
         clean_str = tester_mod.strip_ansi(raw_str)
         self.assertEqual(clean_str, "Active Button")
-        
+
         line1 = tester_mod.pad_line("Short line", width=74)
         line2 = tester_mod.pad_line("\033[1;34mColored line\033[0m with more text", width=74)
-        
+
         self.assertEqual(len(tester_mod.strip_ansi(line1)), 78)  # 74 + "│ " + " │"
         self.assertEqual(len(tester_mod.strip_ansi(line2)), 78)
         self.assertEqual(len(tester_mod.strip_ansi(line1)), len(tester_mod.strip_ansi(line2)))
@@ -47,7 +49,7 @@ class TestGamepadTools(unittest.TestCase):
         self.assertIn(("054c", "09cc"), mode_mod.KNOWN_MODES)
         self.assertIn(("045e", "028e"), mode_mod.KNOWN_MODES)
         self.assertIn(("057e", "2009"), mode_mod.KNOWN_MODES)
-        
+
         ds4_info = mode_mod.KNOWN_MODES[("054c", "09cc")]
         self.assertIn("PlayStation 4", ds4_info["mode"])
 
@@ -58,6 +60,7 @@ class TestGamepadTools(unittest.TestCase):
         self.assertFalse(state.buttons["L4"])
         self.assertEqual(state.left_x, 0.0)
         self.assertEqual(state.trigger_l, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
